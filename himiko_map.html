@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -641,7 +641,7 @@ button{font:inherit;}
 </head>
 
 <body>
-<!-- v19：_登場人物まとめ.md を基準に各環濠の人物一覧を更新。能力値は暫定 -->
+<!-- v20：城之越へ瀬渡一家、阿閉へ梟、三野からヌマル除外、名張へシロ・クロ追加 -->
 <div class="app">
 
   <main class="map-area">
@@ -941,13 +941,17 @@ const settlements = {
   shironokoshi:{
     name:"城之越",
     drilldown:true,
-    characters:[],
+    characters:[
+      {name:"伊賀臣瀬渡", force:65, intellect:75, charm:65},
+      {name:"伊賀之火子", force:75, intellect:50, charm:55},
+      {name:"伊賀之水瀬", force:55, intellect:70, charm:60}
+    ],
     type:"環濠集落",
-    representative:"未設定",
+    representative:"伊賀臣瀬渡",
     population:"未設定",
-    people:"資料上の確定人物なし",
+    people:"伊賀臣瀬渡（セト）、伊賀之火子（ヒコ）、伊賀之水瀬（ミナセ）",
     description:
-      "伊賀群の左側に位置する環濠。『_登場人物まとめ.md』では城之越に直接所属すると確定できる個人名はまだ提示されていない。"
+      "伊賀群の左側に位置する環濠。伊賀臣瀬渡と、その息子である火子・水瀬が所属する。"
   },
 
 
@@ -1035,14 +1039,16 @@ const settlements = {
       {name:"カヤ", force:55, intellect:55, charm:65},
       {name:"ハヤト", force:70, intellect:50, charm:60},
       {name:"トネ", force:65, intellect:65, charm:55},
-      {name:"アシ", force:40, intellect:65, charm:55}
+      {name:"アシ", force:40, intellect:65, charm:55},
+      {name:"シロ", force:65, intellect:35, charm:80},
+      {name:"クロ", force:70, intellect:40, charm:75}
     ],
     type:"環濠集落",
     representative:"名張臣 白髪",
     population:"約100人規模",
-    people:"イミナ、イミコ、白髪、武、岩矛、朝目、小石、萱、ハヤト、トネ、アシ",
+    people:"イミナ、イミコ、白髪、武、岩矛、朝目、小石、萱、ハヤト、トネ、アシ、シロ、クロ",
     description:
-      "物語の中心となる環濠。イミナと火の巫女イミコを中心に、白髪・武・岩矛・朝目らが衛生、農業、交易、防衛、制度を支えている。"
+      "物語の中心となる環濠。イミナと火の巫女イミコを中心に、白髪・武・岩矛・朝目らが衛生、農業、交易、防衛、制度を支えている。シロとクロも名張側のキャラクターとして登録。"
   },
 
   miwa:{
@@ -1067,17 +1073,13 @@ const settlements = {
   iga:{
     name:"伊賀",
     drilldown:false,
-    characters:[
-      {name:"瀬渡", force:65, intellect:75, charm:65},
-      {name:"火子", force:75, intellect:50, charm:55},
-      {name:"水瀬", force:55, intellect:70, charm:60}
-    ],
+    characters:[],
     type:"地域表示・伊賀群",
     representative:"伊賀群",
     population:"複数環濠の集合",
-    people:"伊賀臣瀬渡、伊賀之火子、伊賀之水瀬 ほか",
+    people:"城之越、依那古、青山、柏尾など各地の伊賀諸勢力",
     description:
-      "単一の環濠ではなく『伊賀群』を示す地域表示。城之越、依那古、青山、柏尾など複数の環濠に分かれ、同じ伊賀を名乗りながら長も利害も異なる。瀬渡一家は分裂した伊賀を情報の目と耳として結ぼうとしている。"
+      "単一の環濠ではなく『伊賀群』を示す地域表示。城之越、依那古、青山、柏尾など複数の環濠に分かれ、同じ伊賀を名乗りながら長も利害も異なる。"
   },
 
   abe:{
@@ -1085,14 +1087,15 @@ const settlements = {
     drilldown:true,
     characters:[
       {name:"饗守", force:45, intellect:90, charm:75},
-      {name:"高彦", force:85, intellect:70, charm:65}
+      {name:"高彦", force:85, intellect:70, charm:65},
+      {name:"梟", force:55, intellect:80, charm:45}
     ],
     type:"地域勢力",
     representative:"阿閉臣 饗守",
     population:"約2,000人規模",
-    people:"饗守、高彦",
+    people:"饗守、高彦、梟",
     description:
-      "伊賀と隣接する北方勢力。阿閉臣饗守が統べる。旧三野臣・高彦は現在、阿閉で『客』として厚遇されながら実質的に拘束されている。"
+      "伊賀と隣接する北方勢力。阿閉臣饗守が統べる。旧三野臣・高彦は現在、阿閉で『客』として厚遇されながら実質的に拘束されており、梟も阿閉側にいる。"
   },
 
   mino:{
@@ -1102,15 +1105,14 @@ const settlements = {
       {name:"黒犬", force:75, intellect:85, charm:65},
       {name:"岩根", force:55, intellect:70, charm:65},
       {name:"長見", force:55, intellect:60, charm:45},
-      {name:"カナメ", force:65, intellect:60, charm:50},
-      {name:"ヌマル", force:35, intellect:45, charm:50}
+      {name:"カナメ", force:65, intellect:60, charm:50}
     ],
     type:"環濠・地域勢力",
     representative:"三野臣 黒犬",
     population:"約1,000人規模",
-    people:"黒犬、岩根、長見、カナメ、ヌマル",
+    people:"黒犬、岩根、長見、カナメ",
     description:
-      "名張と強く関わる周辺勢力。現在は黒犬が新たな三野臣となり、名張と友好関係を結び、道と市庭の安全を共同で守る。"
+      "名張と強く関わる周辺勢力。現在は黒犬が新たな三野臣となり、名張と友好関係を結び、道と市庭の安全を共同で守る。ヌマルはフリーの行商人のため所属人物から除外。"
   },
 
   kamo:{
