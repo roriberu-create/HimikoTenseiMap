@@ -651,7 +651,7 @@ button{font:inherit;}
 </head>
 
 <body>
-<!-- v23：三輪-安倍、名張-波多、城之越-柏尾の連絡線を追加 -->
+<!-- v24：伊賀-阿閉直結を削除し伊賀-城之越-依那古-阿閉へ変更／柏尾を上へ移動／青山-柏尾追加 -->
 <div class="app">
 
   <main class="map-area">
@@ -720,11 +720,10 @@ button{font:inherit;}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <!-- 阿閉 → 伊賀 → 三野 → 名張 → 榛原 → 三輪 -->
+          <!-- 伊賀 → 三野 → 名張 → 榛原 → 三輪 -->
           <polyline
             class="route-line-outline"
             points="
-              41.180,71.720
               40.873,72.807
               40.753,73.527
               40.633,74.107
@@ -735,7 +734,6 @@ button{font:inherit;}
           <polyline
             class="route-line-main"
             points="
-              41.180,71.720
               40.873,72.807
               40.753,73.527
               40.633,74.107
@@ -745,6 +743,27 @@ button{font:inherit;}
           />
 
 
+
+
+          <!-- 伊賀 → 城之越 → 依那古 → 阿閉 -->
+          <polyline
+            class="route-line-outline"
+            points="
+              40.873,72.807
+              40.873,72.430
+              40.873,72.060
+              41.180,71.720
+            "
+          />
+          <polyline
+            class="route-line-main"
+            points="
+              40.873,72.807
+              40.873,72.430
+              40.873,72.060
+              41.180,71.720
+            "
+          />
 
           <!-- 城之越 → 伊賀 → 青山 -->
           <polyline
@@ -793,12 +812,25 @@ button{font:inherit;}
           <line
             class="route-line-outline"
             x1="40.873" y1="72.430"
-            x2="41.650" y2="72.880"
+            x2="41.650" y2="72.620"
           />
           <line
             class="route-line-main"
             x1="40.873" y1="72.430"
-            x2="41.650" y2="72.880"
+            x2="41.650" y2="72.620"
+          />
+
+
+          <!-- 青山 → 柏尾 -->
+          <line
+            class="route-line-outline"
+            x1="41.240" y1="72.880"
+            x2="41.650" y2="72.620"
+          />
+          <line
+            class="route-line-main"
+            x1="41.240" y1="72.880"
+            x2="41.650" y2="72.620"
           />
 
           <!-- 波多 → 三野 -->
@@ -872,7 +904,7 @@ button{font:inherit;}
             </div>
           </div>
 
-          <div class="point" style="left:41.650%; top:72.880%;" data-id="kashio">
+          <div class="point" style="left:41.650%; top:72.620%;" data-id="kashio">
             <div class="marker-shell">
               <button class="dot" type="button" aria-label="柏尾"></button>
               <span class="label">柏尾</span>
