@@ -1,0 +1,1574 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卑弥呼の野望</title>
+
+<style>
+:root{
+  --sea:#4f86c6;
+  --panel:#2c241d;
+  --panel2:#362d25;
+  --border:#8b7355;
+  --text:#f5f1e8;
+  --sub:#d8c9b4;
+  --accent:#ffdb9e;
+  --pin:#d83b3b;
+  --pinHover:#ff6262;
+}
+
+*{box-sizing:border-box;}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#111;
+  font-family:"Yu Gothic","YuGothic","Meiryo",sans-serif;
+  color:var(--text);
+}
+
+button{font:inherit;}
+
+.app{
+  width:100vw;
+  height:100vh;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 430px;
+}
+
+/* =========================================================
+   左：地図
+========================================================= */
+.map-area{
+  position:relative;
+  overflow:hidden;
+  background:var(--sea);
+  border-right:2px solid #1b1713;
+}
+
+.map-view{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+
+.map-view.active{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/*
+  全国図と拡大図で同じ日本地図を使い、
+  拡大図では map-stage 全体を拡大します。
+*/
+.map-stage{
+  position:absolute;
+  width:100px;
+  height:100px;
+  left:0;
+  top:0;
+  transform-origin:50% 50%;
+  transition:transform .22s ease;
+}
+
+/*
+  Geolonia map-full.svg は viewBox="0 0 1000 1000"。
+  map-stage も常に正方形にすることで、
+  ブラウザの縦横比が変わっても SVG とピンの座標がずれない。
+*/
+#nationView .map-stage{
+  transform:scale(1);
+}
+
+#kinaiView .map-stage{
+  transform:scale(10);
+}
+
+/*
+  Geolonia japanese-prefectures / map-full.svg
+  画像そのものを茶色系へ変換。
+*/
+.japan-map{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  object-position:center;
+  user-select:none;
+  pointer-events:none;
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(50%)
+    sepia(25%)
+    saturate(850%)
+    hue-rotate(350deg)
+    brightness(90%)
+    contrast(88%);
+}
+
+/* ピンの座標層 */
+.pins{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+}
+
+.point{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  pointer-events:auto;
+}
+
+/*
+  拡大図では地図だけ10倍にしたいので、
+  マーカーを 1/10 に縮小して画面上の大きさを一定に保つ。
+*/
+#kinaiView .marker-shell{
+  transform:scale(0.1);
+  transform-origin:center center;
+}
+
+.marker-shell{
+  position:relative;
+  width:1px;
+  height:1px;
+}
+
+.dot{
+  position:absolute;
+  left:-8px;
+  top:-8px;
+  width:16px;
+  height:16px;
+  padding:0;
+  border:2px solid #fff2d8;
+  border-radius:50%;
+  background:var(--pin);
+  cursor:pointer;
+
+  /* 拡大・移動なし。発光のみ。 */
+  transition:
+    background-color .13s ease,
+    box-shadow .13s ease,
+    border-color .13s ease;
+}
+
+.dot:hover,
+.dot:focus-visible{
+  background:var(--pinHover);
+  border-color:#fff;
+  box-shadow:
+    0 0 4px rgba(255,255,255,.95),
+    0 0 10px rgba(255,65,65,.95),
+    0 0 17px rgba(255,65,65,.65);
+  outline:none;
+}
+
+.dot.selected{
+  background:#ffdb54;
+  border-color:#fff;
+  box-shadow:
+    0 0 5px rgba(255,255,255,1),
+    0 0 12px rgba(255,210,70,.95);
+}
+
+.label{
+  position:absolute;
+  left:13px;
+  top:-11px;
+  white-space:nowrap;
+  font-size:14px;
+  font-weight:bold;
+  color:#fff8e8;
+  text-shadow:
+    -1px -1px 0 rgba(0,0,0,.85),
+     1px -1px 0 rgba(0,0,0,.85),
+    -1px  1px 0 rgba(0,0,0,.85),
+     1px  1px 0 rgba(0,0,0,.85),
+     0 0 4px rgba(0,0,0,.75);
+  pointer-events:none;
+}
+
+/* 全国図の「邪馬台国」は少し大きめに */
+#yamataiPoint .dot{
+  width:20px;
+  height:20px;
+  left:-10px;
+  top:-10px;
+}
+
+#yamataiPoint .label{
+  left:16px;
+  top:-13px;
+  font-size:17px;
+}
+
+
+
+
+/* 環濠ではない基準点・中継地点 */
+.non-settlement-dot{
+  background:#ffffff !important;
+  border-color:#d8d8d8 !important;
+}
+
+.non-settlement-dot:hover,
+.non-settlement-dot:focus-visible{
+  background:#ffffff !important;
+  border-color:#ffffff !important;
+  box-shadow:
+    0 0 4px rgba(255,255,255,1),
+    0 0 10px rgba(255,255,255,.85),
+    0 0 16px rgba(255,255,255,.55);
+}
+
+/* 未設定拠点：位置関係確認用の仮ピン */
+.placeholder-dot{
+  background:#777;
+  border-color:#ddd;
+}
+.placeholder-dot:hover,
+.placeholder-dot:focus-visible{
+  background:#aaa;
+  border-color:#fff;
+  box-shadow:
+    0 0 4px rgba(255,255,255,.9),
+    0 0 10px rgba(220,220,220,.75);
+}
+.placeholder-point .label{
+  color:#e4e4e4;
+}
+
+/* 畿内拡大図：実位置は動かさず、名称ラベルだけ読みやすく配置 */
+#kinaiView .point[data-id="miwa"] .label{
+  left:-42px;
+  top:-12px;
+}
+#kinaiView .point[data-id="kamo"] .label{
+  left:-43px;
+  top:7px;
+}
+#kinaiView .point[data-id="nabari"] .label{
+  left:13px;
+  top:3px;
+}
+#kinaiView .point[data-id="mino"] .label{
+  left:13px;
+  top:-16px;
+}
+#kinaiView .point[data-id="abe"] .label{
+  left:13px;
+  top:-12px;
+}
+#kinaiView .point[data-id="iga"] .label{
+  left:13px;
+  top:-12px;
+}
+
+
+#kinaiView .point[data-id="koga"] .label{
+  left:13px;
+  top:-12px;
+}
+
+
+#kinaiView .point[data-id="biwako"] .label{
+  left:-48px;
+  top:-12px;
+}
+
+
+#kinaiView .point[data-id="haibara"] .label{
+  left:13px;
+  top:-12px;
+}
+#kinaiView .point[data-id="hata"] .label{
+  left:-42px;
+  top:-12px;
+}
+#kinaiView .point[data-id="abeno"] .label{
+  left:-42px;
+  top:4px;
+}
+
+
+
+/* 伊賀は地域表示なので畿内拡大図では文字を非表示 */
+#kinaiView:not(.settlement-detail) .point[data-id="iga"] .label{
+  display:none;
+}
+
+/* 榛原は畿内拡大図では文字を非表示 */
+#kinaiView:not(.settlement-detail) .point[data-id="haibara"] .label{
+  display:none;
+}
+
+/* 榛原の詳細表示中は文字を戻す */
+#kinaiView.settlement-detail .point[data-id="haibara"].active-detail-point .label{
+  display:block;
+}
+
+
+#kinaiView .point[data-id="aoyama"] .label{
+  left:13px;
+  top:-12px;
+}
+#kinaiView .point[data-id="shironokoshi"] .label{
+  left:-50px;
+  top:-12px;
+}
+
+/* 地図上部UI */
+.map-header{
+  position:absolute;
+  z-index:20;
+  top:18px;
+  left:20px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.map-caption{
+  padding:8px 13px;
+  background:rgba(35,27,21,.9);
+  border:1px solid var(--border);
+  border-radius:3px;
+  font-weight:bold;
+  letter-spacing:.08em;
+}
+
+.back-button{
+  display:none;
+  padding:8px 12px;
+  border:1px solid #e8d48c;
+  border-radius:3px;
+  background:#d8b94a;
+  color:#2a2118;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.back-button:hover{
+  background:#e8ca5c;
+}
+
+.back-button.visible{
+  display:block;
+}
+
+.map-note{
+  position:absolute;
+  z-index:20;
+  left:18px;
+  bottom:14px;
+  padding:6px 10px;
+  background:rgba(35,27,21,.84);
+  border:1px solid rgba(139,115,85,.8);
+  color:#eee3d4;
+  font-size:11px;
+  line-height:1.45;
+  pointer-events:none;
+}
+
+/* =========================================================
+   右：情報
+========================================================= */
+.panel{
+  min-width:0;
+  background:var(--panel);
+  padding:18px;
+  overflow-y:auto;
+}
+
+.game-title{
+  font-size:28px;
+  font-weight:bold;
+  letter-spacing:.13em;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+  color:#fff4df;
+}
+
+.date-line{
+  margin-top:9px;
+  margin-bottom:18px;
+  color:var(--sub);
+  font-size:14px;
+}
+
+.info-box{
+  min-height:280px;
+  padding:15px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+}
+
+.info-box h2{
+  margin:0 0 13px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(139,115,85,.55);
+  font-size:25px;
+  color:var(--accent);
+}
+
+.info-row{
+  display:grid;
+  grid-template-columns:92px 1fr;
+  gap:8px;
+  margin:8px 0;
+  line-height:1.55;
+}
+
+.info-key{
+  color:#d0b895;
+  font-weight:bold;
+}
+
+.description{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(139,115,85,.45);
+  line-height:1.7;
+  color:#f1e8db;
+}
+
+.action-button{
+  width:100%;
+  margin-top:15px;
+  padding:11px 12px;
+  background:#6a432b;
+  border:1px solid #c29462;
+  color:#fff4df;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.action-button:hover{
+  background:#825438;
+}
+
+.section-title{
+  margin:20px 0 8px;
+  padding-left:8px;
+  border-left:4px solid #b89866;
+  font-size:15px;
+  font-weight:bold;
+  color:#e8d8bf;
+}
+
+.settlement-list{
+  display:grid;
+  gap:6px;
+}
+
+.settlement-button{
+  width:100%;
+  padding:9px 11px;
+  background:#3a3027;
+  border:1px solid #705d48;
+  color:#f5eee5;
+  text-align:left;
+  cursor:pointer;
+}
+
+.settlement-button:hover{
+  background:#493b2f;
+  border-color:#a78b67;
+}
+
+.license{
+  margin-top:22px;
+  padding-top:12px;
+  border-top:1px solid rgba(139,115,85,.45);
+  font-size:10px;
+  line-height:1.55;
+  color:#a99985;
+}
+
+
+
+/* =========================================================
+   畿内拡大図：環濠間の連絡線
+========================================================= */
+
+.route-lines{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:3;
+  pointer-events:none;
+  overflow:visible;
+}
+
+/* 地図の上で見失わないよう、濃い縁＋明るい芯の2本重ね */
+.route-line-outline{
+  fill:none;
+  stroke:rgba(45,31,20,.88);
+  stroke-width:.060;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.route-line-main{
+  fill:none;
+  stroke:#e2c28c;
+  stroke-width:.026;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+/* 環濠個別の20倍表示では線を消す */
+#kinaiView.settlement-detail .route-lines{
+  display:none;
+}
+
+/* =========================================================
+   環濠詳細表示
+========================================================= */
+
+/* 地域図では10倍、環濠詳細では20倍。
+   詳細時は他拠点を隠し、選択中の拠点だけ残す。 */
+#kinaiView.settlement-detail .map-stage{
+  transform:scale(20);
+}
+
+#kinaiView.settlement-detail .marker-shell{
+  transform:scale(0.05);
+}
+
+#kinaiView.settlement-detail .point{
+  display:none;
+}
+
+#kinaiView.settlement-detail .point.active-detail-point{
+  display:block;
+}
+
+.character-note{
+  margin:10px 0 12px;
+  font-size:11px;
+  color:#bfae96;
+}
+
+.character-table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  margin-top:12px;
+  border:1px solid #8b7355;
+  background:#2e261f;
+}
+
+.character-table th,
+.character-table td{
+  border-bottom:1px solid #66533f;
+  padding:10px 8px;
+}
+
+.character-table th{
+  background:#4a392a;
+  color:#ffdb9e;
+  font-size:13px;
+  letter-spacing:.05em;
+}
+
+.character-table th:first-child,
+.character-table td:first-child{
+  width:46%;
+  text-align:left;
+}
+
+.character-table th:not(:first-child),
+.character-table td:not(:first-child){
+  width:18%;
+  text-align:center;
+}
+
+.character-table tbody tr:hover{
+  background:#44362a;
+}
+
+.character-table .char-name{
+  font-weight:bold;
+  color:#fff4df;
+}
+
+.character-table .stat{
+  font-family:Consolas, "Yu Gothic", monospace;
+  font-weight:bold;
+  color:#f5eee5;
+}
+
+.no-character{
+  margin-top:14px;
+  padding:18px 12px;
+  border:1px solid #705d48;
+  background:#302820;
+  color:#cbbbA5;
+  text-align:center;
+}
+
+.hidden-section{
+  display:none !important;
+}
+
+/* =========================================================
+   狭い画面
+========================================================= */
+@media(max-width:900px){
+  .app{
+    grid-template-columns:1fr;
+    grid-template-rows:60vh 40vh;
+  }
+  .map-area{
+    border-right:0;
+    border-bottom:2px solid #1b1713;
+  }
+  .panel{padding:12px;}
+}
+</style>
+</head>
+
+<body>
+<!-- v19：_登場人物まとめ.md を基準に各環濠の人物一覧を更新。能力値は暫定 -->
+<div class="app">
+
+  <main class="map-area">
+
+    <div class="map-header">
+      <button id="backButton" class="back-button" type="button">← 全国図へ戻る</button>
+      <div id="mapCaption" class="map-caption">倭国勢力図</div>
+    </div>
+
+    <!-- =====================================================
+         全国図
+    ====================================================== -->
+    <section id="nationView" class="map-view active">
+      <div class="map-stage">
+
+        <img
+          class="japan-map"
+          src="https://raw.githubusercontent.com/geolonia/japanese-prefectures/master/map-full.svg"
+          alt="日本列島地図"
+          draggable="false"
+        >
+
+        <div class="pins">
+
+          <!-- 全国図では邪馬台国だけ -->
+          <div
+            id="yamataiPoint"
+            class="point"
+            style="left:40.55%; top:71.70%;"
+          >
+            <div class="marker-shell">
+              <button
+                id="yamataiDot"
+                class="dot"
+                type="button"
+                aria-label="邪馬台国"
+                title="邪馬台国を開く"
+              ></button>
+              <span class="label">邪馬台国</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         畿内拡大図
+         同じ地図を10倍に拡大。
+    ====================================================== -->
+    <section id="kinaiView" class="map-view">
+      <div class="map-stage">
+
+        <img
+          class="japan-map"
+          src="https://raw.githubusercontent.com/geolonia/japanese-prefectures/master/map-full.svg"
+          alt="畿内周辺拡大図"
+          draggable="false"
+        >
+
+
+        <!-- 畿内拡大図でのみ表示する環濠間の連絡線 -->
+        <svg
+          class="route-lines"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <!-- 阿閉 → 伊賀 → 三野 → 名張 → 榛原 → 三輪 -->
+          <polyline
+            class="route-line-outline"
+            points="
+              40.833,72.087
+              40.873,72.807
+              40.753,73.527
+              40.633,74.107
+              40.050,74.197
+              39.300,74.287
+            "
+          />
+          <polyline
+            class="route-line-main"
+            points="
+              40.833,72.087
+              40.873,72.807
+              40.753,73.527
+              40.633,74.107
+              40.050,74.197
+              39.300,74.287
+            "
+          />
+
+
+
+          <!-- 城之越 → 伊賀 → 青山 -->
+          <polyline
+            class="route-line-outline"
+            points="
+              40.220,72.860
+              40.873,72.807
+              41.240,72.880
+            "
+          />
+          <polyline
+            class="route-line-main"
+            points="
+              40.220,72.860
+              40.873,72.807
+              41.240,72.880
+            "
+          />
+
+          <!-- 波多 → 三野 -->
+          <line
+            class="route-line-outline"
+            x1="40.390" y1="73.527"
+            x2="40.753" y2="73.527"
+          />
+          <line
+            class="route-line-main"
+            x1="40.390" y1="73.527"
+            x2="40.753" y2="73.527"
+          />
+
+          <!-- 榛原 → 加茂 -->
+          <line
+            class="route-line-outline"
+            x1="40.050" y1="74.197"
+            x2="40.050" y2="74.827"
+          />
+          <line
+            class="route-line-main"
+            x1="40.050" y1="74.197"
+            x2="40.050" y2="74.827"
+          />
+        </svg>
+
+        <div class="pins">
+
+          <div class="point" style="left:39.30%; top:74.287%;" data-id="miwa">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="三輪"></button>
+              <span class="label">三輪</span>
+            </div>
+          </div>
+
+          <div class="point" style="left:40.633%; top:74.107%;" data-id="nabari">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="名張"></button>
+              <span class="label">名張</span>
+            </div>
+          </div>
+
+
+          <div class="point" style="left:40.050%; top:74.197%;" data-id="haibara">
+            <div class="marker-shell">
+              <button class="dot non-settlement-dot" type="button" aria-label="榛原"></button>
+              <span class="label">榛原</span>
+            </div>
+          </div>
+
+          <div class="point" style="left:40.873%; top:72.807%;" data-id="iga">
+            <div class="marker-shell">
+              <button class="dot non-settlement-dot" type="button" aria-label="伊賀"></button>
+              <span class="label">伊賀</span>
+            </div>
+          </div>
+
+
+          <div class="point" style="left:41.240%; top:72.880%;" data-id="aoyama">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="青山"></button>
+              <span class="label">青山</span>
+            </div>
+          </div>
+
+
+          <div class="point" style="left:40.220%; top:72.860%;" data-id="shironokoshi">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="城之越"></button>
+              <span class="label">城之越</span>
+            </div>
+          </div>
+
+
+          <div class="point" style="left:40.903%; top:69.187%;" data-id="biwako">
+            <div class="marker-shell">
+              <button class="dot non-settlement-dot" type="button" aria-label="琵琶湖"></button>
+              <span class="label">琵琶湖</span>
+            </div>
+          </div>
+
+          <div class="point placeholder-point" style="left:40.873%; top:71.157%;" data-id="koga">
+            <div class="marker-shell">
+              <button class="dot placeholder-dot" type="button" aria-label="甲賀（未設定）"></button>
+              <span class="label">甲賀（未設定）</span>
+            </div>
+          </div>
+
+          <div class="point" style="left:40.833%; top:72.087%;" data-id="abe">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="阿閉"></button>
+              <span class="label">阿閉</span>
+            </div>
+          </div>
+
+          <div class="point" style="left:40.753%; top:73.527%;" data-id="mino">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="三野"></button>
+              <span class="label">三野</span>
+            </div>
+          </div>
+
+
+          <div class="point" style="left:40.390%; top:73.527%;" data-id="hata">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="波多"></button>
+              <span class="label">波多</span>
+            </div>
+          </div>
+
+          <div class="point" style="left:40.05%; top:74.827%;" data-id="kamo">
+            <div class="marker-shell">
+              <button class="dot" type="button" aria-label="加茂"></button>
+              <span class="label">加茂</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <div id="mapNote" class="map-note">
+      赤丸：邪馬台国圏<br>
+      クリックすると畿内周辺を拡大します
+    </div>
+
+  </main>
+
+
+  <!-- =====================================================
+       右パネル
+  ====================================================== -->
+  <aside class="panel">
+
+    <div class="game-title">卑弥呼の野望</div>
+    <div id="dateLine" class="date-line">185年ごろ ／ 全国勢力図</div>
+
+    <section id="infoBox" class="info-box"></section>
+
+    <div id="listTitle" class="section-title">地域一覧</div>
+    <div id="settlementList" class="settlement-list"></div>
+
+    <div class="license">
+      日本列島SVG：Geolonia「japanese-prefectures / map-full.svg」<br>
+      Based on Wikipedia 日本地図.svg / GFDL<br>
+      現代日本地図を作品世界閲覧用の背景として使用しています。<br>
+      各環濠位置は作品設定に基づく概略表示です。Geolonia SVG の1000×1000座標系を固定し、琵琶湖を基準点として配置しています。甲賀は位置関係確認用の未設定仮表示です。
+    </div>
+
+  </aside>
+
+</div>
+
+
+<script>
+/* =========================================================
+   データ
+========================================================= */
+
+const yamatai = {
+  name: "邪馬台国",
+  type: "地域・勢力圏",
+  representative: "火の巫女 イミコ",
+  population: "各環濠・勢力の集合",
+  people: "イミナ、イミコ、および畿内各地の氏族・環濠",
+  description:
+    "『卑弥呼転生』における物語の中心地域。全国図では一つの勢力圏として表示し、クリックすると名張・三輪・三野・伊賀・阿閉・加茂などを確認できる畿内拡大図へ移ります。"
+};
+
+const settlements = {
+
+  aoyama:{
+    name:"青山",
+    drilldown:true,
+    characters:[
+      {name:"ナギト", force:75, intellect:75, charm:65}
+    ],
+    type:"環濠集落",
+    representative:"未設定",
+    population:"未設定",
+    people:"ナギト",
+    description:
+      "伊賀群の右下に位置する環濠。青山の伊賀出身である行商人ナギトが、名張と青山を結ぶ縁を残している。"
+  },
+
+  shironokoshi:{
+    name:"城之越",
+    drilldown:true,
+    characters:[],
+    type:"環濠集落",
+    representative:"未設定",
+    population:"未設定",
+    people:"資料上の確定人物なし",
+    description:
+      "伊賀群の左側に位置する環濠。『_登場人物まとめ.md』では城之越に直接所属すると確定できる個人名はまだ提示されていない。"
+  },
+
+
+  haibara:{
+    name:"榛原",
+    drilldown:false,
+    characters:[],
+    type:"地形・中継地点",
+    representative:"未設定",
+    population:"未設定",
+    people:"未設定",
+    description:
+      "三輪と名張の間に位置する中継地点。名張から三輪方面へ向かう経路上の基準点として表示し、南側には加茂が位置する。"
+  },
+
+  hata:{
+    name:"波多",
+    drilldown:true,
+    characters:[
+      {name:"鳴鳥", force:60, intellect:75, charm:80},
+      {name:"古鷹", force:75, intellect:70, charm:65},
+      {name:"若羽", force:55, intellect:55, charm:65},
+      {name:"カゲハ", force:85, intellect:65, charm:50},
+      {name:"ホナミ", force:30, intellect:70, charm:75}
+    ],
+    type:"環濠集落",
+    representative:"鳴鳥",
+    population:"未設定",
+    people:"鳴鳥、古鷹、若羽、カゲハ、ホナミ",
+    description:
+      "三野のすぐ西側に位置する環濠。鳴鳥を中心に、古鷹・若羽・カゲハらが波多を支え、三野との再編と名張との連携を進めている。"
+  },
+
+  abeno:{
+    name:"安倍",
+    drilldown:true,
+    characters:[
+      {name:"阿倍臣", force:50, intellect:85, charm:75}
+    ],
+    type:"環濠・地域勢力",
+    representative:"阿倍臣",
+    population:"未設定",
+    people:"阿倍臣",
+    description:
+      "三輪の南西側に位置する阿倍の環濠・地域勢力。阿倍臣は三輪の評定で二番手格に座り、祭祀と政治に関わる。"
+  },
+
+
+  biwako:{
+    name:"琵琶湖",
+    drilldown:false,
+    characters:[],
+    type:"地形・基準点",
+    representative:"―",
+    population:"―",
+    people:"―",
+    description:
+      "畿内拡大図における基準となる湖。ここを起点に、南側へ甲賀（未設定）・阿閉・伊賀・三野・名張へ続く位置関係を確認する。"
+  },
+
+
+  koga:{
+    name:"甲賀",
+    drilldown:false,
+    characters:[],
+    type:"地域勢力（未設定）",
+    representative:"未設定",
+    population:"未設定",
+    people:"未設定",
+    description:
+      "琵琶湖の南東側から伊賀方面へ繋がる位置関係を確認するための仮表示。人物・勢力設定はまだ未確定。"
+  },
+
+  nabari:{
+    name:"名張",
+    drilldown:true,
+    characters:[
+      {name:"イミナ", force:10, intellect:80, charm:50},
+      {name:"イミコ", force:5, intellect:20, charm:80},
+      {name:"シラガ", force:60, intellect:70, charm:60},
+      {name:"タケ", force:80, intellect:60, charm:60},
+      {name:"イワホコ", force:70, intellect:40, charm:70},
+      {name:"アサメ", force:25, intellect:65, charm:75},
+      {name:"コイシ", force:5, intellect:25, charm:70},
+      {name:"カヤ", force:55, intellect:55, charm:65},
+      {name:"ハヤト", force:70, intellect:50, charm:60},
+      {name:"トネ", force:65, intellect:65, charm:55},
+      {name:"アシ", force:40, intellect:65, charm:55}
+    ],
+    type:"環濠集落",
+    representative:"名張臣 白髪",
+    population:"約100人規模",
+    people:"イミナ、イミコ、白髪、武、岩矛、朝目、小石、萱、ハヤト、トネ、アシ",
+    description:
+      "物語の中心となる環濠。イミナと火の巫女イミコを中心に、白髪・武・岩矛・朝目らが衛生、農業、交易、防衛、制度を支えている。"
+  },
+
+  miwa:{
+    name:"三輪",
+    drilldown:true,
+    characters:[
+      {name:"意富多多泥古", force:70, intellect:90, charm:85},
+      {name:"真人", force:60, intellect:80, charm:80},
+      {name:"由良", force:45, intellect:75, charm:75},
+      {name:"オシ", force:60, intellect:65, charm:65},
+      {name:"ジン", force:55, intellect:70, charm:50},
+      {name:"サン", force:70, intellect:45, charm:70}
+    ],
+    type:"有力勢力",
+    representative:"三輪君 意富多多泥古",
+    population:"約4,000人規模",
+    people:"意富多多泥古、真人、由良、オシ、ジン、サン",
+    description:
+      "名張西方の有力勢力。三輪君意富多多泥古を中心に、真人・由良・オシらが政治、実務、名張支援を担う。"
+  },
+
+  iga:{
+    name:"伊賀",
+    drilldown:false,
+    characters:[
+      {name:"瀬渡", force:65, intellect:75, charm:65},
+      {name:"火子", force:75, intellect:50, charm:55},
+      {name:"水瀬", force:55, intellect:70, charm:60}
+    ],
+    type:"地域表示・伊賀群",
+    representative:"伊賀群",
+    population:"複数環濠の集合",
+    people:"伊賀臣瀬渡、伊賀之火子、伊賀之水瀬 ほか",
+    description:
+      "単一の環濠ではなく『伊賀群』を示す地域表示。城之越、依那古、青山、柏尾など複数の環濠に分かれ、同じ伊賀を名乗りながら長も利害も異なる。瀬渡一家は分裂した伊賀を情報の目と耳として結ぼうとしている。"
+  },
+
+  abe:{
+    name:"阿閉",
+    drilldown:true,
+    characters:[
+      {name:"饗守", force:45, intellect:90, charm:75},
+      {name:"高彦", force:85, intellect:70, charm:65}
+    ],
+    type:"地域勢力",
+    representative:"阿閉臣 饗守",
+    population:"約2,000人規模",
+    people:"饗守、高彦",
+    description:
+      "伊賀と隣接する北方勢力。阿閉臣饗守が統べる。旧三野臣・高彦は現在、阿閉で『客』として厚遇されながら実質的に拘束されている。"
+  },
+
+  mino:{
+    name:"三野",
+    drilldown:true,
+    characters:[
+      {name:"黒犬", force:75, intellect:85, charm:65},
+      {name:"岩根", force:55, intellect:70, charm:65},
+      {name:"長見", force:55, intellect:60, charm:45},
+      {name:"カナメ", force:65, intellect:60, charm:50},
+      {name:"ヌマル", force:35, intellect:45, charm:50}
+    ],
+    type:"環濠・地域勢力",
+    representative:"三野臣 黒犬",
+    population:"約1,000人規模",
+    people:"黒犬、岩根、長見、カナメ、ヌマル",
+    description:
+      "名張と強く関わる周辺勢力。現在は黒犬が新たな三野臣となり、名張と友好関係を結び、道と市庭の安全を共同で守る。"
+  },
+
+  kamo:{
+    name:"加茂",
+    drilldown:true,
+    characters:[
+      {name:"古道", force:45, intellect:75, charm:70},
+      {name:"東", force:85, intellect:55, charm:55},
+      {name:"土床", force:70, intellect:75, charm:55}
+    ],
+    type:"環濠・産地",
+    representative:"加茂臣 古道",
+    population:"未設定",
+    people:"古道、東、土床",
+    description:
+      "赤い土――辰砂に関わる土地。加茂臣古道のもと、東ら丹守と土床が採掘・加工・安全管理を担う。"
+  }
+};
+
+
+
+/* =========================================================
+   地図座標系の固定
+   Geolonia SVG の viewBox は 1000 x 1000。
+   表示領域の縦横比に関係なく、地図とピンを同じ正方形に置く。
+========================================================= */
+
+const mapArea = document.querySelector(".map-area");
+const nationStage = document.querySelector("#nationView .map-stage");
+const kinaiStage = document.querySelector("#kinaiView .map-stage");
+
+/*
+  畿内拡大図の中心。
+  琵琶湖～名張・三輪をまとめて見せる中心点。
+  1000x1000 座標を 0～1 に正規化した値。
+*/
+const KINAI_CENTER_X = 0.405;
+const KINAI_CENTER_Y = 0.723;
+
+const KINAI_SCALE = 10;
+const SETTLEMENT_SCALE = 20;
+
+let currentMapLevel = "nation";
+let currentSettlementId = null;
+
+function getSettlementPoint(id){
+  const point = document.querySelector(`#kinaiView .point[data-id="${id}"]`);
+  if(!point) return null;
+
+  return {
+    x: parseFloat(point.style.left) / 100,
+    y: parseFloat(point.style.top) / 100
+  };
+}
+
+function layoutMapStages(){
+  const rect = mapArea.getBoundingClientRect();
+
+  /*
+    SVG自体が 1:1 なので、常に正方形で表示。
+    これにより object-fit の余白が発生せず、
+    GPTプレビュー / Firefox / Chrome などでピン位置が変化しない。
+  */
+  const size = Math.max(
+    180,
+    Math.min(rect.width, rect.height) * 0.94
+  );
+
+  // 全国図：正方形を中央配置
+  nationStage.style.width = `${size}px`;
+  nationStage.style.height = `${size}px`;
+  nationStage.style.left = `${(rect.width - size) / 2}px`;
+  nationStage.style.top = `${(rect.height - size) / 2}px`;
+  nationStage.style.transformOrigin = "50% 50%";
+
+  /*
+    畿内図：
+    地域表示は10倍。
+    環濠を選択した場合は、その環濠座標を画面中央に据えて20倍。
+  */
+  let centerX = KINAI_CENTER_X;
+  let centerY = KINAI_CENTER_Y;
+  let scale = KINAI_SCALE;
+
+  if(currentMapLevel === "settlement" && currentSettlementId){
+    const point = getSettlementPoint(currentSettlementId);
+    if(point){
+      centerX = point.x;
+      centerY = point.y;
+      scale = SETTLEMENT_SCALE;
+    }
+  }
+
+  kinaiStage.style.width = `${size}px`;
+  kinaiStage.style.height = `${size}px`;
+  kinaiStage.style.left =
+    `${rect.width / 2 - size * centerX}px`;
+  kinaiStage.style.top =
+    `${rect.height / 2 - size * centerY}px`;
+  kinaiStage.style.transformOrigin =
+    `${centerX * 100}% ${centerY * 100}%`;
+  kinaiStage.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener("resize", layoutMapStages);
+
+if("ResizeObserver" in window){
+  const mapResizeObserver = new ResizeObserver(layoutMapStages);
+  mapResizeObserver.observe(mapArea);
+}
+
+requestAnimationFrame(layoutMapStages);
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const nationView = document.getElementById("nationView");
+const kinaiView = document.getElementById("kinaiView");
+const yamataiDot = document.getElementById("yamataiDot");
+const backButton = document.getElementById("backButton");
+
+const mapCaption = document.getElementById("mapCaption");
+const mapNote = document.getElementById("mapNote");
+const dateLine = document.getElementById("dateLine");
+
+const infoBox = document.getElementById("infoBox");
+const listTitle = document.getElementById("listTitle");
+const settlementList = document.getElementById("settlementList");
+
+
+/* =========================================================
+   情報欄
+========================================================= */
+
+function renderInfo(data, showOpenButton = false){
+  infoBox.innerHTML = `
+    <h2>${data.name}</h2>
+
+    <div class="info-row">
+      <div class="info-key">分類</div>
+      <div>${data.type}</div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-key">代表</div>
+      <div>${data.representative}</div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-key">人口</div>
+      <div>${data.population}</div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-key">主な人物</div>
+      <div>${data.people}</div>
+    </div>
+
+    <div class="description">${data.description}</div>
+
+    ${showOpenButton
+      ? `<button id="openKinaiButton" class="action-button" type="button">
+           邪馬台国・畿内拡大図を開く
+         </button>`
+      : ""
+    }
+  `;
+
+  const openButton = document.getElementById("openKinaiButton");
+  if(openButton){
+    openButton.addEventListener("click", showKinai);
+  }
+}
+
+
+
+function renderCharacterTable(data){
+  const chars = Array.isArray(data.characters) ? data.characters : [];
+
+  const rows = chars.map(char => `
+    <tr>
+      <td class="char-name">${char.name}</td>
+      <td class="stat">${char.force}</td>
+      <td class="stat">${char.intellect}</td>
+      <td class="stat">${char.charm}</td>
+    </tr>
+  `).join("");
+
+  const table = chars.length
+    ? `
+      <table class="character-table">
+        <thead>
+          <tr>
+            <th>名前</th>
+            <th>武力</th>
+            <th>知力</th>
+            <th>魅力</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `
+    : `<div class="no-character">所属人物はまだ登録されていません。</div>`;
+
+  infoBox.innerHTML = `
+    <h2>${data.name}</h2>
+
+    <div class="info-row">
+      <div class="info-key">分類</div>
+      <div>${data.type}</div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-key">代表</div>
+      <div>${data.representative}</div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-key">人口</div>
+      <div>${data.population}</div>
+    </div>
+
+    <div class="description">${data.description}</div>
+
+    <div class="section-title" style="margin-top:18px;">所属人物</div>
+    <div class="character-note">
+      ※ 人物配置は「_登場人物まとめ.md」を基準。能力値は「卑弥呼の野望」用の暫定値です。
+    </div>
+    ${table}
+  `;
+}
+
+
+/* =========================================================
+   一覧
+========================================================= */
+
+function renderNationList(){
+  listTitle.textContent = "地域一覧";
+  settlementList.innerHTML = "";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "settlement-button";
+  button.textContent = "邪馬台国";
+  button.addEventListener("click", () => renderInfo(yamatai, true));
+
+  settlementList.appendChild(button);
+}
+
+function renderKinaiList(){
+  listTitle.textContent = "環濠・勢力・地形一覧";
+  settlementList.innerHTML = "";
+
+  Object.entries(settlements).forEach(([id,data]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "settlement-button";
+    button.textContent = data.name;
+
+    button.addEventListener("click", () => showSettlement(id));
+
+    settlementList.appendChild(button);
+  });
+}
+
+
+/* =========================================================
+   表示切替
+========================================================= */
+
+function clearSelectedDots(){
+  document.querySelectorAll("#kinaiView .dot").forEach(dot => {
+    dot.classList.remove("selected");
+  });
+}
+
+function showNation(){
+  currentMapLevel = "nation";
+  currentSettlementId = null;
+
+  kinaiView.classList.remove("active", "settlement-detail");
+  nationView.classList.add("active");
+
+  document.querySelectorAll("#kinaiView .point").forEach(point => {
+    point.classList.remove("active-detail-point");
+  });
+
+  backButton.classList.remove("visible");
+  backButton.textContent = "← 全国図へ戻る";
+
+  listTitle.classList.remove("hidden-section");
+  settlementList.classList.remove("hidden-section");
+
+  mapCaption.textContent = "倭国勢力図";
+  dateLine.textContent = "185年ごろ ／ 全国勢力図";
+
+  mapNote.innerHTML =
+    "赤丸：邪馬台国圏<br>クリックすると畿内周辺を拡大します";
+
+  renderInfo(yamatai, true);
+  renderNationList();
+
+  requestAnimationFrame(layoutMapStages);
+}
+
+function showKinai(){
+  currentMapLevel = "kinai";
+  currentSettlementId = null;
+
+  nationView.classList.remove("active");
+  kinaiView.classList.add("active");
+  kinaiView.classList.remove("settlement-detail");
+
+  document.querySelectorAll("#kinaiView .point").forEach(point => {
+    point.classList.remove("active-detail-point");
+  });
+
+  backButton.classList.add("visible");
+  backButton.textContent = "← 全国図へ戻る";
+
+  listTitle.classList.remove("hidden-section");
+  settlementList.classList.remove("hidden-section");
+
+  mapCaption.textContent = "邪馬台国・畿内拡大図";
+  dateLine.textContent = "185年ごろ ／ 邪馬台国・畿内";
+
+  mapNote.innerHTML =
+    "赤丸：環濠（クリックで拡大）<br>白丸：補足地点・地域表示（情報のみ表示）";
+
+  clearSelectedDots();
+
+  infoBox.innerHTML = `
+    <h2>邪馬台国・畿内</h2>
+    <div class="description">
+      全国図から邪馬台国圏を拡大しています。<br><br>
+      地図上のピン、または右側の一覧から、
+      琵琶湖・甲賀・阿閉・伊賀・青山・城之越・三野・波多・名張・榛原・三輪・安倍・加茂を選択してください。<br><br>
+      赤丸の環濠はクリックで拡大、白丸の地形・中継地点／地域表示は拡大せず右側に情報のみ表示します。
+    </div>
+  `;
+
+  renderKinaiList();
+
+  requestAnimationFrame(layoutMapStages);
+}
+
+
+/* =========================================================
+   環濠選択
+========================================================= */
+
+function showSettlement(id){
+  const data = settlements[id];
+  if(!data) return;
+
+  /*
+    琵琶湖や未設定の甲賀は、地域図のまま情報だけ表示。
+  */
+  if(data.drilldown === false){
+    renderInfo(data, false);
+    clearSelectedDots();
+
+    const dot = document.querySelector(
+      `#kinaiView .point[data-id="${id}"] .dot`
+    );
+    if(dot) dot.classList.add("selected");
+    return;
+  }
+
+  currentMapLevel = "settlement";
+  currentSettlementId = id;
+
+  kinaiView.classList.add("settlement-detail");
+
+  document.querySelectorAll("#kinaiView .point").forEach(point => {
+    point.classList.toggle(
+      "active-detail-point",
+      point.dataset.id === id
+    );
+  });
+
+  clearSelectedDots();
+
+  const dot = document.querySelector(
+    `#kinaiView .point[data-id="${id}"] .dot`
+  );
+
+  if(dot){
+    dot.classList.add("selected");
+  }
+
+  backButton.classList.add("visible");
+  backButton.textContent = "← 畿内拡大図へ戻る";
+
+  mapCaption.textContent = `${data.name}・環濠`;
+  dateLine.textContent = `185年ごろ ／ ${data.name}`;
+
+  mapNote.innerHTML =
+    `選択中：${data.name}<br>← 畿内拡大図へ戻ると別の環濠を選べます`;
+
+  /*
+    環濠詳細では勢力一覧を非表示。
+    代わりに所属人物表を表示。
+  */
+  listTitle.classList.add("hidden-section");
+  settlementList.classList.add("hidden-section");
+
+  renderCharacterTable(data);
+
+  requestAnimationFrame(layoutMapStages);
+}
+
+document.querySelectorAll("#kinaiView .point[data-id]").forEach(point => {
+  const id = point.dataset.id;
+  const dot = point.querySelector(".dot");
+
+  dot.addEventListener("click", () => {
+    /*
+      環濠詳細表示中に、現在拡大している環濠をもう一度クリックした場合は
+      畿内拡大図へ戻る。
+    */
+    if(
+      currentMapLevel === "settlement" &&
+      currentSettlementId === id
+    ){
+      showKinai();
+      return;
+    }
+
+    showSettlement(id);
+  });
+});
+
+
+/* =========================================================
+   操作
+========================================================= */
+
+yamataiDot.addEventListener("click", showKinai);
+
+backButton.addEventListener("click", () => {
+  if(currentMapLevel === "settlement"){
+    showKinai();
+  }else{
+    showNation();
+  }
+});
+
+
+/* =========================================================
+   初期表示
+========================================================= */
+
+showNation();
+</script>
+
+</body>
+</html>
