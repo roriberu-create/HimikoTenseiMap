@@ -641,7 +641,7 @@ button{font:inherit;}
 </head>
 
 <body>
-<!-- v20：城之越へ瀬渡一家、阿閉へ梟、三野からヌマル除外、名張へシロ・クロ追加 -->
+<!-- v21：ユーザー調整済み能力値を反映 -->
 <div class="app">
 
   <main class="map-area">
@@ -928,7 +928,7 @@ const settlements = {
     name:"青山",
     drilldown:true,
     characters:[
-      {name:"ナギト", force:75, intellect:75, charm:65}
+      {name:"ナギト", force:56, intellect:68, charm:72}
     ],
     type:"環濠集落",
     representative:"未設定",
@@ -942,9 +942,9 @@ const settlements = {
     name:"城之越",
     drilldown:true,
     characters:[
-      {name:"伊賀臣瀬渡", force:65, intellect:75, charm:65},
-      {name:"伊賀之火子", force:75, intellect:50, charm:55},
-      {name:"伊賀之水瀬", force:55, intellect:70, charm:60}
+      {name:"伊賀臣瀬渡", force:71, intellect:73, charm:65},
+      {name:"伊賀之火子", force:82, intellect:48, charm:52},
+      {name:"伊賀之水瀬", force:58, intellect:72, charm:61}
     ],
     type:"環濠集落",
     representative:"伊賀臣瀬渡",
@@ -971,11 +971,11 @@ const settlements = {
     name:"波多",
     drilldown:true,
     characters:[
-      {name:"鳴鳥", force:60, intellect:75, charm:80},
+      {name:"鳴鳥", force:58, intellect:72, charm:82},
       {name:"古鷹", force:75, intellect:70, charm:65},
-      {name:"若羽", force:55, intellect:55, charm:65},
-      {name:"カゲハ", force:85, intellect:65, charm:50},
-      {name:"ホナミ", force:30, intellect:70, charm:75}
+      {name:"若羽", force:64, intellect:56, charm:48},
+      {name:"カゲハ", force:80, intellect:68, charm:60},
+      {name:"ホナミ", force:30, intellect:64, charm:70}
     ],
     type:"環濠集落",
     representative:"鳴鳥",
@@ -989,7 +989,7 @@ const settlements = {
     name:"安倍",
     drilldown:true,
     characters:[
-      {name:"阿倍臣", force:50, intellect:85, charm:75}
+      {name:"阿倍臣", force:46, intellect:86, charm:78}
     ],
     type:"環濠・地域勢力",
     representative:"阿倍臣",
@@ -1029,19 +1029,19 @@ const settlements = {
     name:"名張",
     drilldown:true,
     characters:[
-      {name:"イミナ", force:10, intellect:80, charm:50},
-      {name:"イミコ", force:5, intellect:20, charm:80},
-      {name:"シラガ", force:60, intellect:70, charm:60},
-      {name:"タケ", force:80, intellect:60, charm:60},
-      {name:"イワホコ", force:70, intellect:40, charm:70},
-      {name:"アサメ", force:25, intellect:65, charm:75},
-      {name:"コイシ", force:5, intellect:25, charm:70},
-      {name:"カヤ", force:55, intellect:55, charm:65},
-      {name:"ハヤト", force:70, intellect:50, charm:60},
-      {name:"トネ", force:65, intellect:65, charm:55},
-      {name:"アシ", force:40, intellect:65, charm:55},
-      {name:"シロ", force:65, intellect:35, charm:80},
-      {name:"クロ", force:70, intellect:40, charm:75}
+      {name:"イミナ", force:7, intellect:86, charm:48},
+      {name:"イミコ", force:3, intellect:38, charm:98},
+      {name:"シラガ", force:54, intellect:72, charm:70},
+      {name:"タケ", force:84, intellect:64, charm:60},
+      {name:"イワホコ", force:74, intellect:38, charm:68},
+      {name:"アサメ", force:26, intellect:68, charm:78},
+      {name:"コイシ", force:14, intellect:24, charm:68},
+      {name:"カヤ", force:58, intellect:56, charm:60},
+      {name:"ハヤト", force:72, intellect:54, charm:67},
+      {name:"トネ", force:64, intellect:64, charm:54},
+      {name:"アシ", force:40, intellect:58, charm:56},
+      {name:"シロ", force:68, intellect:42, charm:80},
+      {name:"クロ", force:72, intellect:36, charm:76}
     ],
     type:"環濠集落",
     representative:"名張臣 白髪",
@@ -1055,12 +1055,12 @@ const settlements = {
     name:"三輪",
     drilldown:true,
     characters:[
-      {name:"意富多多泥古", force:70, intellect:90, charm:85},
-      {name:"真人", force:60, intellect:80, charm:80},
-      {name:"由良", force:45, intellect:75, charm:75},
-      {name:"オシ", force:60, intellect:65, charm:65},
-      {name:"ジン", force:55, intellect:70, charm:50},
-      {name:"サン", force:70, intellect:45, charm:70}
+      {name:"意富多多泥古", force:46, intellect:91, charm:86},
+      {name:"真人", force:68, intellect:78, charm:82},
+      {name:"由良", force:46, intellect:72, charm:72},
+      {name:"オシ", force:68, intellect:62, charm:48},
+      {name:"ジン", force:54, intellect:72, charm:56},
+      {name:"サン", force:62, intellect:42, charm:74}
     ],
     type:"有力勢力",
     representative:"三輪君 意富多多泥古",
@@ -1086,9 +1086,9 @@ const settlements = {
     name:"阿閉",
     drilldown:true,
     characters:[
-      {name:"饗守", force:45, intellect:90, charm:75},
-      {name:"高彦", force:85, intellect:70, charm:65},
-      {name:"梟", force:55, intellect:80, charm:45}
+      {name:"饗守", force:40, intellect:84, charm:68},
+      {name:"高彦", force:86, intellect:80, charm:72},
+      {name:"梟", force:62, intellect:78, charm:38}
     ],
     type:"地域勢力",
     representative:"阿閉臣 饗守",
@@ -1102,10 +1102,10 @@ const settlements = {
     name:"三野",
     drilldown:true,
     characters:[
-      {name:"黒犬", force:75, intellect:85, charm:65},
-      {name:"岩根", force:55, intellect:70, charm:65},
-      {name:"長見", force:55, intellect:60, charm:45},
-      {name:"カナメ", force:65, intellect:60, charm:50}
+      {name:"黒犬", force:76, intellect:82, charm:72},
+      {name:"岩根", force:64, intellect:58, charm:62},
+      {name:"長見", force:46, intellect:56, charm:42},
+      {name:"カナメ", force:54, intellect:56, charm:60}
     ],
     type:"環濠・地域勢力",
     representative:"三野臣 黒犬",
@@ -1119,9 +1119,9 @@ const settlements = {
     name:"加茂",
     drilldown:true,
     characters:[
-      {name:"古道", force:45, intellect:75, charm:70},
-      {name:"東", force:85, intellect:55, charm:55},
-      {name:"土床", force:70, intellect:75, charm:55}
+      {name:"古道", force:30, intellect:68, charm:60},
+      {name:"東", force:76, intellect:58, charm:58},
+      {name:"土床", force:62, intellect:64, charm:60}
     ],
     type:"環濠・産地",
     representative:"加茂臣 古道",
