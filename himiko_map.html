@@ -254,8 +254,8 @@ button{font:inherit;}
   top:-12px;
 }
 #kinaiView .point[data-id="kamo"] .label{
-  left:-43px;
-  top:7px;
+  left:-18px;
+  top:12px;
 }
 #kinaiView .point[data-id="nabari"] .label{
   left:13px;
@@ -292,12 +292,12 @@ button{font:inherit;}
   top:-12px;
 }
 #kinaiView .point[data-id="hata"] .label{
-  left:-42px;
-  top:-12px;
+  left:-18px;
+  top:-24px;
 }
 #kinaiView .point[data-id="abeno"] .label{
-  left:-42px;
-  top:4px;
+  left:-18px;
+  top:12px;
 }
 
 
@@ -335,6 +335,26 @@ button{font:inherit;}
 #kinaiView .point[data-id="kashio"] .label{
   left:13px;
   top:-12px;
+}
+
+
+#kinaiView .point[data-id="soga"] .label{
+  left:-18px;
+  top:-24px;
+}
+#kinaiView .point[data-id="katsuragi"] .label{
+  left:-18px;
+  top:-24px;
+}
+#kinaiView .point[data-id="otomo"] .label{
+  left:-18px;
+  top:-24px;
+}
+
+
+#kinaiView .point[data-id="miwa"] .label{
+  left:-18px;
+  top:-24px;
 }
 
 /* 地図上部UI */
@@ -407,6 +427,16 @@ button{font:inherit;}
   padding-bottom:10px;
   border-bottom:1px solid var(--border);
   color:#fff4df;
+}
+
+.update-date{
+  display:inline-block;
+  margin-left:12px;
+  font-size:12px;
+  font-weight:normal;
+  letter-spacing:.04em;
+  color:#cdbd99;
+  vertical-align:middle;
 }
 
 .date-line{
@@ -651,7 +681,7 @@ button{font:inherit;}
 </head>
 
 <body>
-<!-- v24：伊賀-阿閉直結を削除し伊賀-城之越-依那古-阿閉へ変更／柏尾を上へ移動／青山-柏尾追加 -->
+<!-- v30：タイトル横に最終更新日を追加 -->
 <div class="app">
 
   <main class="map-area">
@@ -867,10 +897,31 @@ button{font:inherit;}
             </div>
           </div>
 
+          <div class="point placeholder-point" style="left:38.45%; top:74.18%;" data-id="soga">
+            <div class="marker-shell">
+              <button class="dot placeholder-dot" type="button" aria-label="蘇我（未設定）"></button>
+              <span class="label">蘇我</span>
+            </div>
+          </div>
+
           <div class="point" style="left:38.820%; top:74.850%;" data-id="abeno">
             <div class="marker-shell">
               <button class="dot" type="button" aria-label="安倍"></button>
               <span class="label">安倍</span>
+            </div>
+          </div>
+
+          <div class="point placeholder-point" style="left:38.08%; top:75.02%;" data-id="katsuragi">
+            <div class="marker-shell">
+              <button class="dot placeholder-dot" type="button" aria-label="葛城（未設定）"></button>
+              <span class="label">葛城</span>
+            </div>
+          </div>
+
+          <div class="point placeholder-point" style="left:37.36%; top:73.55%;" data-id="otomo">
+            <div class="marker-shell">
+              <button class="dot placeholder-dot" type="button" aria-label="大伴（未設定）"></button>
+              <span class="label">大伴</span>
             </div>
           </div>
 
@@ -987,7 +1038,7 @@ button{font:inherit;}
   ====================================================== -->
   <aside class="panel">
 
-    <div class="game-title">卑弥呼の野望</div>
+    <div class="game-title">卑弥呼の野望 <span class="update-date">最終更新 2026/09/02</span></div>
     <div id="dateLine" class="date-line">185年ごろ ／ 全国勢力図</div>
 
     <section id="infoBox" class="info-box"></section>
@@ -1023,6 +1074,43 @@ const yamatai = {
 };
 
 const settlements = {
+
+  soga:{
+    name:"蘇我",
+    drilldown:false,
+    characters:[],
+    type:"地域勢力",
+    representative:"未設定",
+    population:"未設定",
+    people:"未設定",
+    description:
+      "未設定。詳細は不明。"
+  },
+
+  katsuragi:{
+    name:"葛城",
+    drilldown:false,
+    characters:[],
+    type:"地域勢力",
+    representative:"未設定",
+    population:"未設定",
+    people:"未設定",
+    description:
+      "未設定。詳細は不明。"
+  },
+
+  otomo:{
+    name:"大伴",
+    drilldown:false,
+    characters:[],
+    type:"地域勢力",
+    representative:"未設定",
+    population:"未設定",
+    people:"未設定",
+    description:
+      "未設定。詳細は不明。"
+  },
+
 
   inako:{
     name:"依那古",
@@ -1577,7 +1665,7 @@ function showKinai(){
     <div class="description">
       全国図から邪馬台国圏を拡大しています。<br><br>
       地図上のピン、または右側の一覧から、
-      淡海・甲賀・阿閉・依那古・城之越・伊賀・青山・柏尾・三野・波多・名張・榛原・三輪・安倍・加茂を選択してください。<br><br>
+      淡海・甲賀・阿閉・依那古・城之越・伊賀・青山・柏尾・三野・波多・名張・榛原・三輪・蘇我・安倍・葛城・大伴・加茂を選択してください。<br><br>
       赤丸の環濠はクリックで拡大、白丸の地形・中継地点／地域表示は拡大せず右側に情報のみ表示します。
     </div>
   `;
